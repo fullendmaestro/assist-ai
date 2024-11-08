@@ -179,3 +179,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+
+# Ignore all the node modules
+**/node_modules/
