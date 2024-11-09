@@ -22,13 +22,18 @@ export const Message = ({
   content,
   toolInvocations,
   attachments,
+  togglePanel,
 }: {
   chatId: string;
   role: string;
   content: string | ReactNode;
   toolInvocations: Array<ToolInvocation> | undefined;
   attachments?: Array<Attachment>;
+  togglePanel: (attachments: Attachment[]) => void;
 }) => {
+  const handletogglePanel = () => {
+    togglePanel(attachments || []);
+  };
   return (
     <motion.div
       className={`flex flex-row gap-4 px-4 w-full md:w-[500px] md:px-0 first-of-type:pt-20`}
@@ -105,7 +110,7 @@ export const Message = ({
         )}
 
         {attachments && (
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2" onClick={handletogglePanel}>
             {attachments.map((attachment) => (
               <PreviewAttachment key={attachment.url} attachment={attachment} />
             ))}

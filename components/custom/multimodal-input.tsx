@@ -42,6 +42,7 @@ export function MultimodalInput({
   messages,
   append,
   handleSubmit,
+  togglePanel,
 }: {
   input: string;
   setInput: (value: string) => void;
@@ -52,14 +53,15 @@ export function MultimodalInput({
   messages: Array<Message>;
   append: (
     message: Message | CreateMessage,
-    chatRequestOptions?: ChatRequestOptions,
+    chatRequestOptions?: ChatRequestOptions
   ) => Promise<string | null | undefined>;
   handleSubmit: (
     event?: {
       preventDefault?: () => void;
     },
-    chatRequestOptions?: ChatRequestOptions,
+    chatRequestOptions?: ChatRequestOptions
   ) => void;
+  togglePanel: (attachments: Attachment[]) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -73,7 +75,9 @@ export function MultimodalInput({
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 0}px`;
+      textareaRef.current.style.height = `${
+        textareaRef.current.scrollHeight + 0
+      }px`;
     }
   };
 
@@ -135,7 +139,7 @@ export function MultimodalInput({
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
         const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined,
+          (attachment) => attachment !== undefined
         );
 
         setAttachments((currentAttachments) => [
@@ -148,8 +152,12 @@ export function MultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments],
+    [setAttachments]
   );
+
+  const handletogglePanel = () => {
+    togglePanel(attachments);
+  };
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -195,7 +203,10 @@ export function MultimodalInput({
       />
 
       {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <div className="flex flex-row gap-2 overflow-x-scroll">
+        <div
+          className="flex flex-row gap-2 overflow-x-scroll"
+          onClick={handletogglePanel}
+        >
           {attachments.map((attachment) => (
             <PreviewAttachment key={attachment.url} attachment={attachment} />
           ))}
