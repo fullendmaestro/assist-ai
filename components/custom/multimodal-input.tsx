@@ -1,5 +1,6 @@
 "use client";
 
+import "regenerator-runtime/runtime";
 import { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import { motion } from "framer-motion";
 import React, {
@@ -18,6 +19,11 @@ import { PreviewAttachment } from "./preview-attachment";
 import useWindowSize from "./use-window-size";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { MicIcon } from "lucide-react";
+
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
 
 const suggestedActions = [
   {
@@ -63,6 +69,9 @@ export function MultimodalInput({
   ) => void;
   togglePanel: (attachments: Attachment[]) => void;
 }) {
+  const [isRecording, setIsRecording] = useState(false);
+  const { transcript, resetTranscript, listening } = useSpeechRecognition();
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
 
@@ -71,6 +80,13 @@ export function MultimodalInput({
       adjustHeight();
     }
   }, []);
+
+  useEffect(() => {
+    let newInput = `${input + transcript}`;
+
+    setInput(newInput);
+    adjustHeight();
+  }, [transcript]);
 
   const adjustHeight = () => {
     if (textareaRef.current) {
@@ -154,6 +170,18 @@ export function MultimodalInput({
     },
     [setAttachments]
   );
+
+  const startRecording = () => {
+    setIsRecording(true);
+    SpeechRecognition.startListening({ continuous: true });
+  };
+
+  const stopRecording = () => {
+    console.log("Transcript", transcript);
+    SpeechRecognition.stopListening();
+    resetTranscript();
+    setIsRecording(false);
+  };
 
   const handletogglePanel = () => {
     togglePanel(attachments);
@@ -278,6 +306,21 @@ export function MultimodalInput({
         disabled={isLoading}
       >
         <PaperclipIcon size={14} />
+      </Button>
+      <Button
+        className="rounded-full p-1.5 h-fit absolute bottom-2 right-18 m-0.5 dark:border-zinc-700"
+        onClick={(event) => {
+          event.preventDefault();
+          if (isRecording) {
+            stopRecording();
+          } else {
+            startRecording();
+          }
+        }}
+        variant={isRecording ? "destructive" : "outline"}
+        disabled={isLoading}
+      >
+        <MicIcon size={14} />
       </Button>
     </div>
   );
