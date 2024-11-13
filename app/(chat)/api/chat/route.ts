@@ -32,6 +32,7 @@ export async function POST(request: Request) {
         - ask follow up questions to based of the prompt
         - ask for any details you don't know.'
         - Output the bare minimum text to get your point across.
+        - users can also attach images and you can analyze them.
         '
       `,
     messages: coreMessages,

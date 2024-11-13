@@ -43,6 +43,8 @@ export function Chat({
       },
     });
 
+  console.log("Messages:", messages);
+
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
 
@@ -77,14 +79,16 @@ export function Chat({
             >
               {messages.length === 0 && <Overview />}
 
-              {messages.map((message) => (
+              {messages.map((message, index) => (
                 <PreviewMessage
                   key={message.id}
                   chatId={id}
+                  message={message}
                   role={message.role}
                   content={message.content}
                   attachments={message.experimental_attachments}
                   toolInvocations={message.toolInvocations}
+                  isLoading={isLoading && messages.length - 1 === index}
                   togglePanel={togglePannel}
                 />
               ))}
