@@ -1,8 +1,13 @@
 "use client";
 
+import { MicIcon } from "lucide-react";
+
 import { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
+
 import cx from "classnames";
+
 import { motion } from "framer-motion";
+
 import React, {
   useRef,
   useEffect,
@@ -12,20 +17,21 @@ import React, {
   SetStateAction,
   ChangeEvent,
 } from "react";
+
 import { toast } from "sonner";
+
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
 import { sanitizeUIMessages } from "@/lib/utils";
+
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "@/node_lib_local/react-speech-recognition";
 
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { MicIcon } from "lucide-react";
-
-import SpeechRecognition, {
-  useSpeechRecognition,
-} from "@/node_lib_local/react-speech-recognition";
 
 const suggestedActions = [
   {

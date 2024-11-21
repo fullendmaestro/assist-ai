@@ -1,5 +1,9 @@
 "use client";
 
+import Image from "next/image";
+
+import { Attachment } from "ai";
+
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -8,8 +12,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Attachment } from "ai";
-import Image from "next/image";
 
 export const PannelAttachment = ({
   panelattachments,

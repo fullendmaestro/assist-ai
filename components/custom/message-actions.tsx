@@ -1,12 +1,21 @@
+import { useState } from "react";
+
+import { Volume2, VolumeX } from "lucide-react";
+
 import { Attachment, Message } from "ai";
+
 import { toast } from "sonner";
+
 import { useSWRConfig } from "swr";
+
 import { useCopyToClipboard } from "usehooks-ts";
 
 import { Vote } from "@/db/schema";
+
 import { getMessageIdFromAnnotations } from "@/lib/utils";
 
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+
 import { Button } from "../ui/button";
 import {
   Tooltip,
@@ -14,8 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
 
 export function MessageActions({
   chatId,
