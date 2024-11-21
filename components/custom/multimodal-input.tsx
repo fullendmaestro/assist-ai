@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import cx from "classnames";
 import { motion } from "framer-motion";
@@ -215,7 +214,7 @@ export function MultimodalInput({
   const startRecording = () => {
     setPrevInput(input);
     setIsRecording(true);
-    SpeechRecognition.startListening({ continuous: true });
+    SpeechRecognition.startListening({ continuous: true, language: "en-US" });
   };
 
   console.log("Transcript", transcript);
