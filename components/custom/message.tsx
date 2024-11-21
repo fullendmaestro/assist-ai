@@ -1,72 +1,63 @@
 "use client";
 
-import { Message as Messagetype } from "ai";
-import { Attachment, ToolInvocation } from "ai";
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { Attachment, Message } from "ai";
 import cx from "classnames";
+import { motion } from "framer-motion";
+import { Dispatch, SetStateAction } from "react";
 
-import { BotIcon, UserIcon } from "./icons";
+import { Vote } from "@/db/schema";
+
+import { SparklesIcon } from "./icons";
 import { Markdown } from "./markdown";
+import { MessageActions } from "./message-actions";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
-import { MessageActions } from "./message-actions";
 
-export const Message = ({
+export const PreviewMessage = ({
   chatId,
   message,
-  role,
-  content,
-  toolInvocations,
-  attachments,
+  vote,
   isLoading,
   togglePanel,
 }: {
   chatId: string;
-  message: Messagetype;
-  role: string;
-  content: string | ReactNode;
-  toolInvocations: Array<ToolInvocation> | undefined;
-  attachments?: Array<Attachment>;
+  message: Message;
+  vote: Vote | undefined;
   isLoading: boolean;
-  togglePanel: (attachments: Attachment[]) => void;
+  togglePanel: (attachments: Attachment[] | any) => any;
 }) => {
-  const handletogglePanel = () => {
-    togglePanel(attachments || []);
+  const handlePanel = () => {
+    togglePanel(message.experimental_attachments);
   };
-
   return (
     <motion.div
-      className="w-full px-4 group/message md:w-[500px] md:px-0"
+      className="w-full mx-auto max-w-3xl px-4 group/message"
       initial={{ y: 5, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      data-role={role}
+      data-role={message.role}
     >
       <div
         className={cx(
-          "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:py-2 rounded-xl",
-          {
-            "group-data-[role=user]/message:bg-primary group-data-[role=user]/message:text-primary-foreground":
-              role === "user",
-          }
+          "group-data-[role=user]/message:bg-primary group-data-[role=user]/message:text-primary-foreground flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl"
         )}
       >
-        {role === "assistant" ? (
+        {message.role === "assistant" && (
           <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-            <BotIcon />
+            <SparklesIcon size={14} />
           </div>
-        ) : null}
+        )}
+
         <div className="flex flex-col gap-2 w-full">
-          {content && typeof content === "string" && (
-            <div className="flex flex-col gap-4 text-zinc-800 dark:text-zinc-300">
-              <Markdown>{content}</Markdown>
+          {message.content && (
+            <div className="flex flex-col gap-4">
+              <Markdown>{message.content as string}</Markdown>
             </div>
           )}
 
-          {toolInvocations && (
+          {message.toolInvocations && message.toolInvocations.length > 0 && (
             <div className="flex flex-col gap-4">
-              {toolInvocations.map((toolInvocation) => {
-                const { toolName, toolCallId, state } = toolInvocation;
+              {message.toolInvocations.map((toolInvocation) => {
+                const { toolName, toolCallId, state, args } = toolInvocation;
 
                 if (state === "result") {
                   const { result } = toolInvocation;
@@ -76,15 +67,18 @@ export const Message = ({
                       {toolName === "getWeather" ? (
                         <Weather weatherAtLocation={result} />
                       ) : (
-                        <div className="whitespace-pre-wrap text-sm text-muted-foreground">
-                          {JSON.stringify(result, null, 2)}
-                        </div>
+                        <pre>{JSON.stringify(result, null, 2)}</pre>
                       )}
                     </div>
                   );
                 } else {
                   return (
-                    <div key={toolCallId} className="skeleton">
+                    <div
+                      key={toolCallId}
+                      className={cx({
+                        skeleton: ["getWeather"].includes(toolName),
+                      })}
+                    >
                       {toolName === "getWeather" ? <Weather /> : null}
                     </div>
                   );
@@ -93,9 +87,9 @@ export const Message = ({
             </div>
           )}
 
-          {attachments && (
-            <div className="flex flex-row gap-2" onClick={handletogglePanel}>
-              {attachments.map((attachment) => (
+          {message.experimental_attachments && (
+            <div className="flex flex-row gap-2" onClick={handlePanel}>
+              {message.experimental_attachments.map((attachment) => (
                 <PreviewAttachment
                   key={attachment.url}
                   attachment={attachment}
@@ -103,12 +97,46 @@ export const Message = ({
               ))}
             </div>
           )}
+
           <MessageActions
             key={`action-${message.id}`}
             chatId={chatId}
             message={message}
+            vote={vote}
             isLoading={isLoading}
           />
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export const ThinkingMessage = () => {
+  const role = "assistant";
+
+  return (
+    <motion.div
+      className="w-full mx-auto max-w-3xl px-4 group/message "
+      initial={{ y: 5, opacity: 0 }}
+      animate={{ y: 0, opacity: 1, transition: { delay: 1 } }}
+      data-role={role}
+    >
+      <div
+        className={cx(
+          "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl",
+          {
+            "group-data-[role=user]/message:bg-muted": true,
+          }
+        )}
+      >
+        <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
+          <SparklesIcon size={14} />
+        </div>
+
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-4 text-muted-foreground">
+            Thinking...
+          </div>
         </div>
       </div>
     </motion.div>

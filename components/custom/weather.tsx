@@ -207,10 +207,10 @@ export function Weather({
   weatherAtLocation?: WeatherAtLocation;
 }) {
   const currentHigh = Math.max(
-    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24),
+    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );
   const currentLow = Math.min(
-    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24),
+    ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );
 
   const isDay = isWithinInterval(new Date(weatherAtLocation.current.time), {
@@ -235,29 +235,29 @@ export function Weather({
 
   // Find the index of the current time or the next closest time
   const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
-    (time) => new Date(time) >= new Date(weatherAtLocation.current.time),
+    (time) => new Date(time) >= new Date(weatherAtLocation.current.time)
   );
 
   // Slice the arrays to get the desired number of items
   const displayTimes = weatherAtLocation.hourly.time.slice(
     currentTimeIndex,
-    currentTimeIndex + hoursToShow,
+    currentTimeIndex + hoursToShow
   );
   const displayTemperatures = weatherAtLocation.hourly.temperature_2m.slice(
     currentTimeIndex,
-    currentTimeIndex + hoursToShow,
+    currentTimeIndex + hoursToShow
   );
 
   return (
     <div
       className={cx(
-        "flex flex-col gap-4 rounded-2xl p-4 skeleton-bg",
+        "flex flex-col gap-4 rounded-2xl p-4 skeleton-bg max-w-[500px]",
         {
           "bg-blue-400": isDay,
         },
         {
           "bg-indigo-900": !isDay,
-        },
+        }
       )}
     >
       <div className="flex flex-row justify-between items-center">
@@ -270,7 +270,7 @@ export function Weather({
               },
               {
                 "bg-indigo-100": !isDay,
-              },
+              }
             )}
           />
           <div className="text-4xl font-medium text-blue-50">
@@ -279,7 +279,9 @@ export function Weather({
           </div>
         </div>
 
-        <div className="text-blue-50">{`H:${n(currentHigh)}° L:${n(currentLow)}°`}</div>
+        <div className="text-blue-50">{`H:${n(currentHigh)}° L:${n(
+          currentLow
+        )}°`}</div>
       </div>
 
       <div className="flex flex-row justify-between">
@@ -296,7 +298,7 @@ export function Weather({
                 },
                 {
                   "bg-indigo-200": !isDay,
-                },
+                }
               )}
             />
             <div className="text-blue-50 text-sm">

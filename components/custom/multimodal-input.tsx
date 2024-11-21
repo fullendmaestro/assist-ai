@@ -1,7 +1,7 @@
 "use client";
 
-import "regenerator-runtime/runtime";
 import { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
+import cx from "classnames";
 import { motion } from "framer-motion";
 import React, {
   useRef,
@@ -13,32 +13,35 @@ import React, {
   ChangeEvent,
 } from "react";
 import { toast } from "sonner";
+import { useLocalStorage, useWindowSize } from "usehooks-ts";
+
+import { sanitizeUIMessages } from "@/lib/utils";
 
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
-import useWindowSize from "./use-window-size";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { MicIcon } from "lucide-react";
 
 import SpeechRecognition, {
   useSpeechRecognition,
-} from "react-speech-recognition";
+} from "@/node_lib_local/react-speech-recognition";
 
 const suggestedActions = [
   {
-    title: "Help me book a flight",
-    label: "from San Francisco to London",
-    action: "Help me book a flight from San Francisco to London",
+    title: "What is the weather",
+    label: "in San Francisco?",
+    action: "What is the weather in San Francisco?",
   },
   {
-    title: "What is the status",
-    label: "of flight BA142 flying tmrw?",
-    action: "What is the status of flight BA142 flying tmrw?",
+    title: "Help me draft an essay",
+    label: "about Silicon Valley",
+    action: "Help me draft a short essay about Silicon Valley",
   },
 ];
 
 export function MultimodalInput({
+  chatId,
   input,
   setInput,
   isLoading,
@@ -46,10 +49,13 @@ export function MultimodalInput({
   attachments,
   setAttachments,
   messages,
+  setMessages,
   append,
   handleSubmit,
+  className,
   togglePanel,
 }: {
+  chatId: string;
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;
@@ -57,6 +63,7 @@ export function MultimodalInput({
   attachments: Array<Attachment>;
   setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
   messages: Array<Message>;
+  setMessages: Dispatch<SetStateAction<Array<Message>>>;
   append: (
     message: Message | CreateMessage,
     chatRequestOptions?: ChatRequestOptions
@@ -67,11 +74,9 @@ export function MultimodalInput({
     },
     chatRequestOptions?: ChatRequestOptions
   ) => void;
-  togglePanel: (attachments: Attachment[]) => void;
+  className?: string;
+  togglePanel: (attachments: Attachment[]) => any;
 }) {
-  const [isRecording, setIsRecording] = useState(false);
-  const { transcript, resetTranscript, listening } = useSpeechRecognition();
-
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
 
@@ -81,21 +86,35 @@ export function MultimodalInput({
     }
   }, []);
 
-  useEffect(() => {
-    let newInput = `${input + transcript}`;
-
-    setInput(newInput);
-    adjustHeight();
-  }, [transcript]);
-
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${
-        textareaRef.current.scrollHeight + 0
+        textareaRef.current.scrollHeight + 2
       }px`;
     }
   };
+
+  const [localStorageInput, setLocalStorageInput] = useLocalStorage(
+    "input",
+    ""
+  );
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      const domValue = textareaRef.current.value;
+      // Prefer DOM value over localStorage to handle hydration
+      const finalValue = domValue || localStorageInput || "";
+      setInput(finalValue);
+      adjustHeight();
+    }
+    // Only run once after hydration
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    setLocalStorageInput(input);
+  }, [input, setLocalStorageInput]);
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
@@ -106,16 +125,26 @@ export function MultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
+    window.history.replaceState({}, "", `/chat/${chatId}`);
+
     handleSubmit(undefined, {
       experimental_attachments: attachments,
     });
 
     setAttachments([]);
+    setLocalStorageInput("");
 
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [attachments, handleSubmit, setAttachments, width]);
+  }, [
+    attachments,
+    handleSubmit,
+    setAttachments,
+    setLocalStorageInput,
+    width,
+    chatId,
+  ]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -171,14 +200,30 @@ export function MultimodalInput({
     [setAttachments]
   );
 
+  const [isRecording, setIsRecording] = useState(false);
+  const { transcript, resetTranscript, listening } = useSpeechRecognition();
+  const [prevInput, setPrevInput] = useState("");
+
+  useEffect(() => {
+    let newInput = `${prevInput + transcript}`;
+
+    if (transcript) {
+      setInput(newInput);
+    }
+  }, [transcript]);
+
   const startRecording = () => {
+    setPrevInput(input);
     setIsRecording(true);
     SpeechRecognition.startListening({ continuous: true });
   };
 
+  console.log("Transcript", transcript);
+
   const stopRecording = () => {
     console.log("Transcript", transcript);
     SpeechRecognition.stopListening();
+    setInput(`${prevInput + transcript}`);
     resetTranscript();
     setIsRecording(false);
   };
@@ -192,7 +237,7 @@ export function MultimodalInput({
       {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
-          <div className="grid sm:grid-cols-2 gap-4 w-full md:px-0 mx-auto md:max-w-[500px]">
+          <div className="grid sm:grid-cols-2 gap-2 w-full">
             {suggestedActions.map((suggestedAction, index) => (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -202,20 +247,23 @@ export function MultimodalInput({
                 key={index}
                 className={index > 1 ? "hidden sm:block" : "block"}
               >
-                <button
+                <Button
+                  variant="ghost"
                   onClick={async () => {
+                    window.history.replaceState({}, "", `/chat/${chatId}`);
+
                     append({
                       role: "user",
                       content: suggestedAction.action,
                     });
                   }}
-                  className="border-none bg-muted/50 w-full text-left border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-300 rounded-lg p-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex flex-col"
+                  className="text-left border rounded-xl px-4 py-3.5 text-sm flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
                 >
                   <span className="font-medium">{suggestedAction.title}</span>
-                  <span className="text-zinc-500 dark:text-zinc-400">
+                  <span className="text-muted-foreground">
                     {suggestedAction.label}
                   </span>
-                </button>
+                </Button>
               </motion.div>
             ))}
           </div>
@@ -232,7 +280,7 @@ export function MultimodalInput({
 
       {(attachments.length > 0 || uploadQueue.length > 0) && (
         <div
-          className="flex flex-row gap-2 overflow-x-scroll"
+          className="flex flex-row gap-2 overflow-x-scroll items-end"
           onClick={handletogglePanel}
         >
           {attachments.map((attachment) => (
@@ -258,8 +306,12 @@ export function MultimodalInput({
         placeholder="Send a message..."
         value={input}
         onChange={handleInput}
-        className="min-h-[24px] overflow-hidden resize-none rounded-lg text-base bg-muted border-none"
+        className={cx(
+          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-xl text-base bg-muted",
+          className
+        )}
         rows={3}
+        autoFocus
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -275,17 +327,18 @@ export function MultimodalInput({
 
       {isLoading ? (
         <Button
-          className="rounded-full p-1.5 h-fit absolute bottom-2 right-2 m-0.5 text-white"
+          className="rounded-full p-1.5 h-fit absolute bottom-2 right-2 m-0.5 border dark:border-zinc-600"
           onClick={(event) => {
             event.preventDefault();
             stop();
+            setMessages((messages) => sanitizeUIMessages(messages));
           }}
         >
           <StopIcon size={14} />
         </Button>
       ) : (
         <Button
-          className="rounded-full p-1.5 h-fit absolute bottom-2 right-2 m-0.5 text-white"
+          className="rounded-full p-1.5 h-fit absolute bottom-2 right-2 m-0.5 border dark:border-zinc-600"
           onClick={(event) => {
             event.preventDefault();
             submitForm();
@@ -297,7 +350,7 @@ export function MultimodalInput({
       )}
 
       <Button
-        className="rounded-full p-1.5 h-fit absolute bottom-2 right-10 m-0.5 dark:border-zinc-700"
+        className="rounded-full p-1.5 h-fit absolute bottom-2 right-11 m-0.5 dark:border-zinc-700"
         onClick={(event) => {
           event.preventDefault();
           fileInputRef.current?.click();

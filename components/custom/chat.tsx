@@ -2,48 +2,64 @@
 
 import { Attachment, Message } from "ai";
 import { useChat } from "ai/react";
-import { useEffect, useState } from "react";
-
-import { Message as PreviewMessage } from "@/components/custom/message";
-import { useScrollToBottom } from "@/components/custom/use-scroll-to-bottom";
+import { AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import useSWR, { useSWRConfig } from "swr";
+import { useWindowSize } from "usehooks-ts";
 
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { ChatHeader } from "@/components/custom/chat-header";
+import { PreviewMessage, ThinkingMessage } from "@/components/custom/message";
+import { useScrollToBottom } from "@/components/custom/use-scroll-to-bottom";
+import { Vote } from "@/db/schema";
+import { fetcher } from "@/lib/utils";
 
+// import { Block, UIBlock } from "./block";
+// import { BlockStreamHandler } from "./block-stream-handler";
 import { MultimodalInput } from "./multimodal-input";
 import { Overview } from "./overview";
-import Image from "next/image";
+import { PannelAttachment } from "./panel-attachment-preview";
 
 export function Chat({
   id,
   initialMessages,
+  selectedModelId,
 }: {
   id: string;
   initialMessages: Array<Message>;
+  selectedModelId: string;
 }) {
-  const { messages, handleSubmit, input, setInput, append, isLoading, stop } =
-    useChat({
-      id,
-      body: { id },
-      initialMessages,
-      maxSteps: 10,
-      onFinish: () => {
-        window.history.replaceState({}, "", `/chat/${id}`);
-      },
-    });
+  const { mutate } = useSWRConfig();
 
-  console.log("Messages:", messages);
+  const {
+    messages,
+    setMessages,
+    handleSubmit,
+    input,
+    setInput,
+    append,
+    isLoading,
+    stop,
+    data: streamingData,
+  } = useChat({
+    body: { id, modelId: selectedModelId },
+    initialMessages,
+    onFinish: () => {
+      mutate("/api/history");
+    },
+  });
+
+  const { width: windowWidth = 1920, height: windowHeight = 1080 } =
+    useWindowSize();
+
+  const { data: votes } = useSWR<Array<Vote>>(
+    `/api/vote?chatId=${id}`,
+    fetcher
+  );
 
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -56,26 +72,23 @@ export function Chat({
   );
 
   // State hook to manage the visibility of the panel
-  const [pannelOpen, setPannelOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   // Function to toggle the visibility of the panel and set the attachments to display
-  const togglePannel = (attachments: Attachment[]) => {
-    setPannelOpen((prevState) => !prevState);
+  const togglePanel = (attachments: Attachment[]) => {
+    setPanelOpen((prevState) => !prevState);
     setPanelAttachments(attachments);
   };
 
-  useEffect(() => {
-    console.log("Attachments changed:", attachments);
-  }, [attachments]);
-
   return (
-    <ResizablePanelGroup direction="horizontal">
-      <ResizablePanel>
-        <div className="flex flex-row justify-center pb-4 md:pb-8 h-dvh bg-background">
-          <div className="flex flex-col justify-between items-center gap-4">
+    <>
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel minSize={20}>
+          <div className="flex flex-col min-w-0 h-dvh bg-background">
+            <ChatHeader selectedModelId={selectedModelId} />
             <div
               ref={messagesContainerRef}
-              className="flex flex-col gap-4 h-full w-dvw items-center overflow-y-scroll"
+              className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
             >
               {messages.length === 0 && <Overview />}
 
@@ -84,23 +97,30 @@ export function Chat({
                   key={message.id}
                   chatId={id}
                   message={message}
-                  role={message.role}
-                  content={message.content}
-                  attachments={message.experimental_attachments}
-                  toolInvocations={message.toolInvocations}
                   isLoading={isLoading && messages.length - 1 === index}
-                  togglePanel={togglePannel}
+                  vote={
+                    votes
+                      ? votes.find((vote) => vote.messageId === message.id)
+                      : undefined
+                  }
+                  togglePanel={togglePanel}
                 />
               ))}
+
+              {isLoading &&
+                messages.length > 0 &&
+                messages[messages.length - 1].role === "user" && (
+                  <ThinkingMessage />
+                )}
 
               <div
                 ref={messagesEndRef}
                 className="shrink-0 min-w-[24px] min-h-[24px]"
               />
             </div>
-
-            <form className="flex flex-row gap-2 relative items-end w-full md:max-w-[500px] max-w-[calc(100dvw-32px) px-4 md:px-0">
+            <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
               <MultimodalInput
+                chatId={id}
                 input={input}
                 setInput={setInput}
                 handleSubmit={handleSubmit}
@@ -109,44 +129,20 @@ export function Chat({
                 attachments={attachments}
                 setAttachments={setAttachments}
                 messages={messages}
+                setMessages={setMessages}
                 append={append}
-                togglePanel={togglePannel}
+                togglePanel={togglePanel}
               />
             </form>
           </div>
-        </div>
-      </ResizablePanel>
-      <ResizableHandle />
-
-      {pannelOpen && (
-        <ResizablePanel>
-          <div className="flex justify-center items-center h-full p-10">
-            <Carousel className="w-full max-w-xs">
-              <CarouselContent>
-                {panelAttachments.map((attachment, index) => (
-                  <CarouselItem key={index}>
-                    <div className="p-1">
-                      <Card>
-                        <CardContent className="flex aspect-square items-center justify-center p-6">
-                          <Image
-                            src={attachment.url}
-                            alt={attachment.name || "Attachment"}
-                            width={500}
-                            height={500}
-                            className="w-full h-auto"
-                          />
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </div>
         </ResizablePanel>
-      )}
-    </ResizablePanelGroup>
+        <ResizableHandle />
+        {panelOpen && (
+          <ResizablePanel minSize={20}>
+            <PannelAttachment panelattachments={panelAttachments} />
+          </ResizablePanel>
+        )}
+      </ResizablePanelGroup>
+    </>
   );
 }

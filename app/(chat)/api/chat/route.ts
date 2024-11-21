@@ -1,47 +1,84 @@
-import { convertToCoreMessages, Message, streamText } from "ai";
+import { convertToCoreMessages, Message, StreamData, streamText } from "ai";
 import { z } from "zod";
 
-import { geminiProModel } from "@/ai";
+import { customModel } from "@/ai";
+import { models } from "@/ai/models";
+import { systemPrompt } from "@/ai/prompts";
 import { auth } from "@/app/(auth)/auth";
-import { deleteChatById, getChatById, saveChat } from "@/db/queries";
-import { generateUUID } from "@/lib/utils";
+import {
+  generateUUID,
+  getMostRecentUserMessage,
+  sanitizeResponseMessages,
+} from "@/lib/utils";
+import {
+  deleteChatById,
+  getChatById,
+  saveChat,
+  saveMessages,
+} from "@/db/queries";
+import { generateTitleFromUserMessage } from "../../actions";
+
+export const maxDuration = 60;
+
+type AllowedTools = "getWeather";
+
+const weatherTools: AllowedTools[] = ["getWeather"];
+const allTools: AllowedTools[] = ["getWeather"];
 
 export async function POST(request: Request) {
-  const { id, messages }: { id: string; messages: Array<Message> } =
+  const {
+    id,
+    messages,
+    modelId,
+  }: { id: string; messages: Array<Message>; modelId: string } =
     await request.json();
 
   const session = await auth();
 
-  if (!session) {
+  if (!session || !session.user || !session.user.id) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const coreMessages = convertToCoreMessages(messages).filter(
-    (message) => message.content.length > 0
-  );
+  const model = models.find((model) => model.id === modelId);
+
+  if (!model) {
+    return new Response("Model not found", { status: 404 });
+  }
+
+  const coreMessages = convertToCoreMessages(messages);
+  const userMessage = getMostRecentUserMessage(coreMessages);
+
+  if (!userMessage) {
+    return new Response("No user message found", { status: 400 });
+  }
+
+  const chat = await getChatById({ id });
+
+  if (!chat) {
+    const title = await generateTitleFromUserMessage({ message: userMessage });
+    await saveChat({ id, userId: session.user.id, title });
+  }
+
+  await saveMessages({
+    messages: [
+      { ...userMessage, id: generateUUID(), createdAt: new Date(), chatId: id },
+    ],
+  });
+
+  const streamingData = new StreamData();
 
   const result = await streamText({
-    model: geminiProModel,
-    system: `\n
-        - you assist users understand things!
-        - You can be tasked to look at images and analyze the images and text
-        - keep your responses limited to a sentence.
-        - DO NOT output lists.
-        - after every tool call, pretend you're showing the result to the user and keep your response limited to a phrase.
-        - today's date is ${new Date().toLocaleDateString()}.
-        - ask follow up questions to based of the prompt
-        - ask for any details you don't know.'
-        - Output the bare minimum text to get your point across.
-        - users can also attach images and you can analyze them.
-        '
-      `,
+    model: customModel(model.apiIdentifier),
+    system: systemPrompt,
     messages: coreMessages,
+    maxSteps: 5,
+    experimental_activeTools: allTools,
     tools: {
       getWeather: {
         description: "Get the current weather at a location",
         parameters: z.object({
-          latitude: z.number().describe("Latitude coordinate"),
-          longitude: z.number().describe("Longitude coordinate"),
+          latitude: z.number(),
+          longitude: z.number(),
         }),
         execute: async ({ latitude, longitude }) => {
           const response = await fetch(
@@ -54,18 +91,38 @@ export async function POST(request: Request) {
       },
     },
     onFinish: async ({ responseMessages }) => {
-      // Implements text to speech here and save it.
       if (session.user && session.user.id) {
         try {
-          await saveChat({
-            id,
-            messages: [...coreMessages, ...responseMessages],
-            userId: session.user.id,
+          const responseMessagesWithoutIncompleteToolCalls =
+            sanitizeResponseMessages(responseMessages);
+
+          await saveMessages({
+            messages: responseMessagesWithoutIncompleteToolCalls.map(
+              (message) => {
+                const messageId = generateUUID();
+
+                if (message.role === "assistant") {
+                  streamingData.appendMessageAnnotation({
+                    messageIdFromServer: messageId,
+                  });
+                }
+
+                return {
+                  id: messageId,
+                  chatId: id,
+                  role: message.role,
+                  content: message.content,
+                  createdAt: new Date(),
+                };
+              }
+            ),
           });
         } catch (error) {
           console.error("Failed to save chat");
         }
       }
+
+      streamingData.close();
     },
     experimental_telemetry: {
       isEnabled: true,
@@ -73,7 +130,9 @@ export async function POST(request: Request) {
     },
   });
 
-  return result.toDataStreamResponse({});
+  return result.toDataStreamResponse({
+    data: streamingData,
+  });
 }
 
 export async function DELETE(request: Request) {

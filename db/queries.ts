@@ -1,11 +1,21 @@
-import "server-only";
+"server-only";
 
 import { genSaltSync, hashSync } from "bcrypt-ts";
-import { desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import { user, chat, User, reservation } from "./schema";
+import {
+  user,
+  chat,
+  User,
+  document,
+  Suggestion,
+  suggestion,
+  Message,
+  message,
+  vote,
+} from "./schema";
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
@@ -36,30 +46,19 @@ export async function createUser(email: string, password: string) {
 
 export async function saveChat({
   id,
-  messages,
   userId,
+  title,
 }: {
   id: string;
-  messages: any;
   userId: string;
+  title: string;
 }) {
   try {
-    const selectedChats = await db.select().from(chat).where(eq(chat.id, id));
-
-    if (selectedChats.length > 0) {
-      return await db
-        .update(chat)
-        .set({
-          messages: JSON.stringify(messages),
-        })
-        .where(eq(chat.id, id));
-    }
-
     return await db.insert(chat).values({
       id,
       createdAt: new Date(),
-      messages: JSON.stringify(messages),
       userId,
+      title,
     });
   } catch (error) {
     console.error("Failed to save chat in database");
@@ -69,6 +68,9 @@ export async function saveChat({
 
 export async function deleteChatById({ id }: { id: string }) {
   try {
+    await db.delete(vote).where(eq(vote.chatId, id));
+    await db.delete(message).where(eq(message.chatId, id));
+
     return await db.delete(chat).where(eq(chat.id, id));
   } catch (error) {
     console.error("Failed to delete chat by id from database");
@@ -99,44 +101,66 @@ export async function getChatById({ id }: { id: string }) {
   }
 }
 
-export async function createReservation({
-  id,
-  userId,
-  details,
-}: {
-  id: string;
-  userId: string;
-  details: any;
-}) {
-  return await db.insert(reservation).values({
-    id,
-    createdAt: new Date(),
-    userId,
-    hasCompletedPayment: false,
-    details: JSON.stringify(details),
-  });
+export async function saveMessages({ messages }: { messages: Array<Message> }) {
+  try {
+    return await db.insert(message).values(messages);
+  } catch (error) {
+    console.error("Failed to save messages in database", error);
+    throw error;
+  }
 }
 
-export async function getReservationById({ id }: { id: string }) {
-  const [selectedReservation] = await db
-    .select()
-    .from(reservation)
-    .where(eq(reservation.id, id));
-
-  return selectedReservation;
+export async function getMessagesByChatId({ id }: { id: string }) {
+  try {
+    return await db
+      .select()
+      .from(message)
+      .where(eq(message.chatId, id))
+      .orderBy(asc(message.createdAt));
+  } catch (error) {
+    console.error("Failed to get messages by chat id from database", error);
+    throw error;
+  }
 }
 
-export async function updateReservation({
-  id,
-  hasCompletedPayment,
+export async function voteMessage({
+  chatId,
+  messageId,
+  type,
 }: {
-  id: string;
-  hasCompletedPayment: boolean;
+  chatId: string;
+  messageId: string;
+  type: "up" | "down";
 }) {
-  return await db
-    .update(reservation)
-    .set({
-      hasCompletedPayment,
-    })
-    .where(eq(reservation.id, id));
+  try {
+    const [existingVote] = await db
+      .select()
+      .from(vote)
+      .where(and(eq(vote.messageId, messageId)));
+
+    if (existingVote) {
+      return await db
+        .update(vote)
+        .set({ isUpvoted: type === "up" ? true : false })
+        .where(and(eq(vote.messageId, messageId), eq(vote.chatId, chatId)));
+    } else {
+      return await db.insert(vote).values({
+        chatId,
+        messageId,
+        isUpvoted: type === "up" ? true : false,
+      });
+    }
+  } catch (error) {
+    console.error("Failed to upvote message in database", error);
+    throw error;
+  }
+}
+
+export async function getVotesByChatId({ id }: { id: string }) {
+  try {
+    return await db.select().from(vote).where(eq(vote.chatId, id));
+  } catch (error) {
+    console.error("Failed to get votes by chat id from database", error);
+    throw error;
+  }
 }

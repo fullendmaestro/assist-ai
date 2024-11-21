@@ -1,14 +1,14 @@
 import {
+  CoreAssistantMessage,
   CoreMessage,
   CoreToolMessage,
-  generateId,
   Message,
   ToolInvocation,
 } from "ai";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import { Chat } from "@/db/schema";
+import { Message as DBMessage, Document } from "@/db/schema";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -85,7 +85,7 @@ function addToolMessageToChat({
 }
 
 export function convertToUIMessages(
-  messages: Array<CoreMessage>
+  messages: Array<DBMessage>
 ): Array<Message> {
   return messages.reduce((chatMessages: Array<Message>, message) => {
     if (message.role === "tool") {
@@ -116,8 +116,8 @@ export function convertToUIMessages(
     }
 
     chatMessages.push({
-      id: generateId(),
-      role: message.role,
+      id: message.id,
+      role: message.role as Message["role"],
       content: textContent,
       toolInvocations,
     });
@@ -126,17 +126,99 @@ export function convertToUIMessages(
   }, []);
 }
 
-export function getTitleFromChat(chat: Chat) {
-  const messages = convertToUIMessages(chat.messages as Array<CoreMessage>);
-  const firstMessage = messages[0];
+export function sanitizeResponseMessages(
+  messages: Array<CoreToolMessage | CoreAssistantMessage>
+): Array<CoreToolMessage | CoreAssistantMessage> {
+  let toolResultIds: Array<string> = [];
 
-  if (!firstMessage) {
-    return "Untitled";
+  for (const message of messages) {
+    if (message.role === "tool") {
+      for (const content of message.content) {
+        if (content.type === "tool-result") {
+          toolResultIds.push(content.toolCallId);
+        }
+      }
+    }
   }
 
-  return firstMessage.content;
+  const messagesBySanitizedContent = messages.map((message) => {
+    if (message.role !== "assistant") return message;
+
+    if (typeof message.content === "string") return message;
+
+    const sanitizedContent = message.content.filter((content) =>
+      content.type === "tool-call"
+        ? toolResultIds.includes(content.toolCallId)
+        : content.type === "text"
+        ? content.text.length > 0
+        : true
+    );
+
+    return {
+      ...message,
+      content: sanitizedContent,
+    };
+  });
+
+  return messagesBySanitizedContent.filter(
+    (message) => message.content.length > 0
+  );
 }
 
-export async function convertSpeechToText(speech: any): string {
-  return "speech converted to text";
+export function sanitizeUIMessages(messages: Array<Message>): Array<Message> {
+  const messagesBySanitizedToolInvocations = messages.map((message) => {
+    if (message.role !== "assistant") return message;
+
+    if (!message.toolInvocations) return message;
+
+    let toolResultIds: Array<string> = [];
+
+    for (const toolInvocation of message.toolInvocations) {
+      if (toolInvocation.state === "result") {
+        toolResultIds.push(toolInvocation.toolCallId);
+      }
+    }
+
+    const sanitizedToolInvocations = message.toolInvocations.filter(
+      (toolInvocation) =>
+        toolInvocation.state === "result" ||
+        toolResultIds.includes(toolInvocation.toolCallId)
+    );
+
+    return {
+      ...message,
+      toolInvocations: sanitizedToolInvocations,
+    };
+  });
+
+  return messagesBySanitizedToolInvocations.filter(
+    (message) =>
+      message.content.length > 0 ||
+      (message.toolInvocations && message.toolInvocations.length > 0)
+  );
+}
+
+export function getMostRecentUserMessage(messages: Array<CoreMessage>) {
+  const userMessages = messages.filter((message) => message.role === "user");
+  return userMessages.at(-1);
+}
+
+export function getDocumentTimestampByIndex(
+  documents: Array<Document>,
+  index: number
+) {
+  if (!documents) return new Date();
+  if (index > documents.length) return new Date();
+
+  return documents[index].createdAt;
+}
+
+export function getMessageIdFromAnnotations(message: Message) {
+  if (!message.annotations) return message.id;
+
+  const [annotation] = message.annotations;
+  if (!annotation) return message.id;
+
+  // @ts-expect-error messageIdFromServer is not defined in MessageAnnotation
+  return annotation.messageIdFromServer;
 }
