@@ -1,7 +1,6 @@
 "use client";
 
 import { Star } from "lucide-react";
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWindowSize } from "usehooks-ts";

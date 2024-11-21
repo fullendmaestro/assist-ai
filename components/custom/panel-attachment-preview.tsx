@@ -1,8 +1,8 @@
 "use client";
 
+import { Attachment } from "ai";
 import Image from "next/image";
 
-import { Attachment } from "ai";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {

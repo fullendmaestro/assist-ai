@@ -2,24 +2,19 @@
 
 import { Attachment, Message } from "ai";
 import { useChat } from "ai/react";
-
 import { useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
-
 import { useWindowSize } from "usehooks-ts";
 
-import { useScrollToBottom } from "@/components/custom/use-scroll-to-bottom";
-import { PreviewMessage, ThinkingMessage } from "@/components/custom/message";
 import { ChatHeader } from "@/components/custom/chat-header";
-
+import { PreviewMessage, ThinkingMessage } from "@/components/custom/message";
+import { useScrollToBottom } from "@/components/custom/use-scroll-to-bottom";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-
 import { Vote } from "@/db/schema";
-
 import { fetcher } from "@/lib/utils";
 
 import { MultimodalInput } from "./multimodal-input";

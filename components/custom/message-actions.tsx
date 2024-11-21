@@ -1,21 +1,14 @@
-import { useState } from "react";
-
-import { Volume2, VolumeX } from "lucide-react";
-
 import { Attachment, Message } from "ai";
-
+import { Volume2, VolumeX } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-
 import { useSWRConfig } from "swr";
-
 import { useCopyToClipboard } from "usehooks-ts";
 
 import { Vote } from "@/db/schema";
-
 import { getMessageIdFromAnnotations } from "@/lib/utils";
 
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
-
 import { Button } from "../ui/button";
 import {
   Tooltip,
@@ -66,7 +59,7 @@ export function MessageActions({
                   speechSynthesis.speak(utterance);
                 }}
               >
-                <Volume2 className="h-4 w-4" />
+                <Volume2 className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Read</TooltipContent>
@@ -85,7 +78,7 @@ export function MessageActions({
                   toast.success("Message stoped playing!");
                 }}
               >
-                <VolumeX className="h-4 w-4 text-primary" />
+                <VolumeX className="size-4 text-primary" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Stop</TooltipContent>

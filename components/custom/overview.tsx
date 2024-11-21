@@ -1,8 +1,7 @@
+import { motion } from "framer-motion";
 import { Bot, MessageSquare } from "lucide-react";
-
 import Link from "next/link";
 
-import { motion } from "framer-motion";
 
 export const Overview = () => {
   return (

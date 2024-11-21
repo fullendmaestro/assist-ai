@@ -1,25 +1,21 @@
 import { convertToCoreMessages, Message, StreamData, streamText } from "ai";
-
 import { z } from "zod";
 
 import { customModel } from "@/ai";
 import { models } from "@/ai/models";
 import { systemPrompt } from "@/ai/prompts";
-
 import { auth } from "@/app/(auth)/auth";
-
-import {
-  generateUUID,
-  getMostRecentUserMessage,
-  sanitizeResponseMessages,
-} from "@/lib/utils";
-
 import {
   deleteChatById,
   getChatById,
   saveChat,
   saveMessages,
 } from "@/db/queries";
+import {
+  generateUUID,
+  getMostRecentUserMessage,
+  sanitizeResponseMessages,
+} from "@/lib/utils";
 
 import { generateTitleFromUserMessage } from "../../actions";
 
