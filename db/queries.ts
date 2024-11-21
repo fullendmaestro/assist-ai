@@ -5,17 +5,7 @@ import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import {
-  user,
-  chat,
-  User,
-  document,
-  Suggestion,
-  suggestion,
-  Message,
-  message,
-  vote,
-} from "./schema";
+import { user, chat, User, Message, message, vote } from "./schema";
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
