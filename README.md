@@ -1,5 +1,7 @@
 # Assist AI: Transforming Text, Speech, and Visuals
 
+![Interface](public/images/interface.png)
+
 This is a coding challenge project to build apps that transform text, speech, and visuals into immersive experiences – it's time to blend modes and create magic across dimensions!
 
 ## Project Overview
@@ -11,7 +13,7 @@ Assist AI is an innovative application that seamlessly integrates text, speech, 
 1. **Input**:
 
    - **Text**: Users can input text via the chatbot text area.
-   - **Speech**: Users can use speech recognition to input text.
+   - **Speech**: Users can input speech which will be transcribed to input text in real time.
    - **Visuals**: Users can upload images or other files to interact with the chatbot.
 
 2. **Processing**:
@@ -27,7 +29,7 @@ Assist AI is an innovative application that seamlessly integrates text, speech, 
    - **Visual Output**: Uploaded images can also be previewed for further analysis and user experience interaction.
 
 4. **Coprehensive Preview**:
-   - **You can also have a comprehensive preview of the attachments while chatting**
+   - **You can also have a comprehensive preview of the attachments while chatting. By clicking on the attachments, a sidepanel is opened with a comprehensive preview of the attachments**
 
 ### Interaction Between Modalities
 
@@ -73,7 +75,7 @@ Follow these steps to set up and run the project locally:
    POSTGRES_URL=your-postgres-database-url
    ```
 
-   > Note: Follow the following steps to get access to your vercel related environment variables.
+   > Note: Follow the following steps to get access to your vercel related environment variables. Also you must first create a vercel project with this project as a repository. Then create a vercel blob storage and postgress database. Then connect the both of the storage the project. Then follow the following steps:
 
    1. Install Vercel CLI: `npm i -g vercel`
    2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
@@ -96,55 +98,28 @@ Follow these steps to set up and run the project locally:
 
 ### Third-Party APIs and Dependencies
 
-- [Next.js](https://nextjs.org) App Router
-  - Advanced routing for seamless navigation and performance
-  - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance
-- **[AI SDK](https://sdk.vercel.ai/docs)**:
-  - Unified API for generating text, structured objects, and tool calls with LLMs
-  - Hooks for building dynamic chat and generative user interfaces
-  - Supports Google (default), OpenAI, Anthropic, Cohere, and other model providers
-- **[shadcn/ui](https://ui.shadcn.com)**
-  - Styling with [Tailwind CSS](https://tailwindcss.com)
-  - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility
-- **Data Persistence**
-  - [Vercel Postgres powered by Neon](https://vercel.com/storage/postgres) for saving chat history and user data
-  - [Vercel Blob](https://vercel.com/storage/blob) for efficient object storage
-- **[NextAuth.js](https://github.com/nextauthjs/next-auth)**
-  - Simple and secure authentication
-- **SpeechRecognition**:
+- **[Next.js](https://nextjs.org) App Router:**
+  - Advanced routing for seamless navigation and performance.
+  - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance.
+- **[AI SDK](https://sdk.vercel.ai/docs):**
+  - Unified API for generating text, structured objects, and tool calls with LLMs.
+  - Hooks for building dynamic chat and generative user interfaces.
+  - Supports Google (default), OpenAI, Anthropic, Cohere, and other model providers.
+- **[shadcn/ui](https://ui.shadcn.com):**
+  - Styling with [Tailwind CSS](https://tailwindcss.com).
+  - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility.
+- **Data Persistence:**
+  - [Vercel Postgres powered by Neon](https://vercel.com/storage/postgres) for saving chat history and user data.
+  - [Vercel Blob](https://vercel.com/storage/blob) for efficient object storage.
+- **[NextAuth.js](https://github.com/nextauthjs/next-auth):**
+  - Simple and secure authentication.
+- **SpeechRecognition:**
   - [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) for text to speech.
   - [React Speech Recognition](https://github.com/JamesBrill/react-speech-recognition) for speech to text. It also uses the `web speech api` internally.
-- **Next.js**: Framework for building the application.
-
-## Screenshots
-
-### Chat Interface
-
-![Text Input](public/images/chat-interface.png)
-
-### Text Input
-
-![Text Input](public/images/text-input.png)
-
-### Speech Input
-
-![Speech Input](public/images/speech-input.png)
-
-### Image Upload
-
-![Image Upload](public/images/image-upload.png)
-
-### Text Output
-
-![Text Output](public/images/text-output.png)
-
-### Speech Output
-
-![Speech Output](public/images/speech-output.png)
 
 ## Live Demo
 
-Check out the live demo of the application [here](https://your-live-demo-url.com).
+Check out the live demo of the application [here](https://assist-ai-eta.vercel.app/).
 
 ## Important Notes
 
