@@ -3,7 +3,7 @@
 import { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import cx from "classnames";
 import { motion } from "framer-motion";
-import { MicIcon } from "lucide-react";
+import { ImageIcon, MicIcon } from "lucide-react";
 import React, {
   useRef,
   useEffect,
@@ -357,7 +357,7 @@ export function MultimodalInput({
         variant="outline"
         disabled={isLoading}
       >
-        <PaperclipIcon size={14} />
+        <ImageIcon size={14} />
       </Button>
       <Button
         className="rounded-full p-1.5 h-fit absolute bottom-2 right-18 m-0.5 dark:border-zinc-700"
