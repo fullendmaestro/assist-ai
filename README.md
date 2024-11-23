@@ -1,6 +1,6 @@
 # Assist AI: Transforming Text, Speech, and Visuals
 
-![Interface](public/images/interface.png)
+![Interface](https://github.com/fullendmaestro/assist-ai/blob/main/public/images/Interface.png)
 
 This is a coding challenge project to build apps that transform text, speech, and visuals into immersive experiences – it's time to blend modes and create magic across dimensions!
 
@@ -116,6 +116,14 @@ Follow these steps to set up and run the project locally:
 - **SpeechRecognition:**
   - [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) for text to speech.
   - [React Speech Recognition](https://github.com/JamesBrill/react-speech-recognition) for speech to text. It also uses the `web speech api` internally.
+
+## Video Demo
+
+[Assist AI.mp4](https://github.com/fullendmaestro/assist-ai/blob/main/public/Assist%20AI.mp4)
+
+## Youtube Video Demo
+
+Watch a video demonstration of the application [here](https://youtu.be/o7PztOCCIFY).
 
 ## Live Demo
 
