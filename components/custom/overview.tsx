@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Bot, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
+import { Button } from "../ui/button";
 
 export const Overview = () => {
   return (
@@ -22,16 +23,20 @@ export const Overview = () => {
         <p>
           <h2 className="text-2xl font-bold">Bot Overview</h2>
           <p className="text-lg">
-            This project is designed to assist users with AI-driven prompts. It
-            leverages the power of modern AI technologies to provide insightful
-            and helpful responses to user queries.
+            This is an AI Assinstant that transform text, speech, and visuals
+            into immersive experiences. It is designed to assist users with
+            AI-driven prompts. It leverages the power of Google&apos;s Gemini AI
+            technologies to provide insightful and helpful responses to user
+            queries.
           </p>
-          <p className="text-lg">
-            By integrating with various APIs and utilizing advanced machine
-            learning models, this project aims to deliver accurate and
-            contextually relevant information in a user-friendly manner.
-          </p>
-          <Link href="/learn-more">Learn more</Link>
+          <Button
+            className="bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900"
+            asChild
+          >
+            <Link href="https://github.com/fullendmaestro/assist-ai">
+              Learn more
+            </Link>
+          </Button>
         </p>
       </div>
     </motion.div>

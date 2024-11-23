@@ -217,10 +217,7 @@ export function MultimodalInput({
     SpeechRecognition.startListening({ continuous: true, language: "en-US" });
   };
 
-  console.log("Transcript", transcript);
-
   const stopRecording = () => {
-    console.log("Transcript", transcript);
     SpeechRecognition.stopListening();
     setInput(`${prevInput + transcript}`);
     resetTranscript();

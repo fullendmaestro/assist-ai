@@ -79,7 +79,7 @@ export function Chat({
 
   return (
     <>
-      <ResizablePanelGroup direction="horizontal">
+      <ResizablePanelGroup direction="horizontal" className="w-screen h-screen">
         <ResizablePanel minSize={20}>
           <div className="flex flex-col min-w-0 h-dvh bg-background">
             <ChatHeader selectedModelId={selectedModelId} />
@@ -135,8 +135,11 @@ export function Chat({
         </ResizablePanel>
         <ResizableHandle />
         {panelOpen && (
-          <ResizablePanel minSize={20}>
-            <PannelAttachment panelattachments={panelAttachments} />
+          <ResizablePanel minSize={20} className="hidden md:block p-5">
+            <PannelAttachment
+              panelattachments={panelAttachments}
+              togglePanel={togglePanel}
+            />
           </ResizablePanel>
         )}
       </ResizablePanelGroup>
