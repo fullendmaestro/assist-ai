@@ -119,7 +119,7 @@ Follow these steps to set up and run the project locally:
 
 ## Video Demo
 
-[Assist AI.mp4](https://github.com/fullendmaestro/assist-ai/blob/main/public/Assist%20AI.mp4)
+![Assist AI.mp4](https://github.com/fullendmaestro/assist-ai/blob/main/public/Assist%20AI.mp4)
 
 ## Youtube Video Demo
 
