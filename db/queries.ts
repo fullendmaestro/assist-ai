@@ -13,6 +13,7 @@ import { user, chat, User, Message, message, vote } from "./schema";
 let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
 let db = drizzle(client);
 
+// Function to get user by email
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
@@ -22,6 +23,7 @@ export async function getUser(email: string): Promise<Array<User>> {
   }
 }
 
+// Function to create a new user
 export async function createUser(email: string, password: string) {
   let salt = genSaltSync(10);
   let hash = hashSync(password, salt);
@@ -34,6 +36,7 @@ export async function createUser(email: string, password: string) {
   }
 }
 
+// Function to save a new chat
 export async function saveChat({
   id,
   userId,

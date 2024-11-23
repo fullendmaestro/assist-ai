@@ -30,8 +30,10 @@ export function Chat({
   initialMessages: Array<Message>;
   selectedModelId: string;
 }) {
+  // SWR configuration for data mutation
   const { mutate } = useSWRConfig();
 
+  // Chat hook to manage chat state and actions
   const {
     messages,
     setMessages,
@@ -50,17 +52,21 @@ export function Chat({
     },
   });
 
+  // Hook to get window size
   const { width: windowWidth = 1920, height: windowHeight = 1080 } =
     useWindowSize();
 
+  // Fetch votes data using SWR
   const { data: votes } = useSWR<Array<Vote>>(
     `/api/vote?chatId=${id}`,
     fetcher
   );
 
+  // Hooks to manage scrolling to bottom of the chat
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
 
+  // State hook to manage attachments
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
 
   // State hook to manage the list of attachments in the chat panel

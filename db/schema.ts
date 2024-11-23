@@ -11,97 +11,103 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
+// represent user
 export const user = pgTable("User", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  email: varchar("email", { length: 64 }).notNull(),
-  password: varchar("password", { length: 64 }),
+  id: uuid("id").primaryKey().notNull().defaultRandom(), // user id
+  email: varchar("email", { length: 64 }).notNull(), // email
+  password: varchar("password", { length: 64 }), // password
 });
 
 export type User = InferSelectModel<typeof user>;
 
+// represent chat
 export const chat = pgTable("Chat", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  createdAt: timestamp("createdAt").notNull(),
-  title: text("title").notNull(),
+  id: uuid("id").primaryKey().notNull().defaultRandom(), // chat id
+  createdAt: timestamp("createdAt").notNull(), // creation timestamp
+  title: text("title").notNull(), // chat title
   userId: uuid("userId")
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id), // reference to user id
 });
 
 export type Chat = InferSelectModel<typeof chat>;
 
+// represent message
 export const message = pgTable("Message", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  id: uuid("id").primaryKey().notNull().defaultRandom(), // message id
   chatId: uuid("chatId")
     .notNull()
-    .references(() => chat.id),
-  role: varchar("role").notNull(),
-  content: json("content").notNull(),
-  createdAt: timestamp("createdAt").notNull(),
+    .references(() => chat.id), // reference to chat id
+  role: varchar("role").notNull(), // role of the message sender
+  content: json("content").notNull(), // message content
+  createdAt: timestamp("createdAt").notNull(), // creation timestamp
 });
 
 export type Message = InferSelectModel<typeof message>;
 
+// represent vote
 export const vote = pgTable(
   "Vote",
   {
     chatId: uuid("chatId")
       .notNull()
-      .references(() => chat.id),
+      .references(() => chat.id), // reference to chat id
     messageId: uuid("messageId")
       .notNull()
-      .references(() => message.id),
-    isUpvoted: boolean("isUpvoted").notNull(),
+      .references(() => message.id), // reference to message id
+    isUpvoted: boolean("isUpvoted").notNull(), // upvote status
   },
   (table) => {
     return {
-      pk: primaryKey({ columns: [table.chatId, table.messageId] }),
+      pk: primaryKey({ columns: [table.chatId, table.messageId] }), // composite primary key
     };
   }
 );
 
 export type Vote = InferSelectModel<typeof vote>;
 
+// represent document
 export const document = pgTable(
   "Document",
   {
-    id: uuid("id").notNull().defaultRandom(),
-    createdAt: timestamp("createdAt").notNull(),
-    title: text("title").notNull(),
-    content: text("content"),
+    id: uuid("id").notNull().defaultRandom(), // document id
+    createdAt: timestamp("createdAt").notNull(), // creation timestamp
+    title: text("title").notNull(), // document title
+    content: text("content"), // document content
     userId: uuid("userId")
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id), // reference to user id
   },
   (table) => {
     return {
-      pk: primaryKey({ columns: [table.id, table.createdAt] }),
+      pk: primaryKey({ columns: [table.id, table.createdAt] }), // composite primary key
     };
   }
 );
 
 export type Document = InferSelectModel<typeof document>;
 
+// represent suggestion
 export const suggestion = pgTable(
   "Suggestion",
   {
-    id: uuid("id").notNull().defaultRandom(),
-    documentId: uuid("documentId").notNull(),
-    documentCreatedAt: timestamp("documentCreatedAt").notNull(),
-    originalText: text("originalText").notNull(),
-    suggestedText: text("suggestedText").notNull(),
-    description: text("description"),
-    isResolved: boolean("isResolved").notNull().default(false),
+    id: uuid("id").notNull().defaultRandom(), // suggestion id
+    documentId: uuid("documentId").notNull(), // reference to document id
+    documentCreatedAt: timestamp("documentCreatedAt").notNull(), // reference to document creation timestamp
+    originalText: text("originalText").notNull(), // original text
+    suggestedText: text("suggestedText").notNull(), // suggested text
+    description: text("description"), // description of the suggestion
+    isResolved: boolean("isResolved").notNull().default(false), // resolution status
     userId: uuid("userId")
       .notNull()
-      .references(() => user.id),
-    createdAt: timestamp("createdAt").notNull(),
+      .references(() => user.id), // reference to user id
+    createdAt: timestamp("createdAt").notNull(), // creation timestamp
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.id] }),
+    pk: primaryKey({ columns: [table.id] }), // primary key
     documentRef: foreignKey({
-      columns: [table.documentId, table.documentCreatedAt],
-      foreignColumns: [document.id, document.createdAt],
+      columns: [table.documentId, table.documentCreatedAt], // foreign key columns
+      foreignColumns: [document.id, document.createdAt], // referenced columns
     }),
   })
 );

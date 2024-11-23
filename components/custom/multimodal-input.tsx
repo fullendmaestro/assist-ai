@@ -76,12 +76,12 @@ export function MultimodalInput({
   className?: string;
   togglePanel: (attachments: Attachment[]) => any;
 }) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { width } = useWindowSize();
+  const textareaRef = useRef<HTMLTextAreaElement>(null); // Reference to the textarea element
+  const { width } = useWindowSize(); // Get the window size
 
   useEffect(() => {
     if (textareaRef.current) {
-      adjustHeight();
+      adjustHeight(); // Adjust the height of the textarea on mount
     }
   }, []);
 
@@ -90,51 +90,48 @@ export function MultimodalInput({
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${
         textareaRef.current.scrollHeight + 2
-      }px`;
+      }px`; // Adjust the height based on scroll height
     }
   };
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
     ""
-  );
+  ); // Local storage for input
 
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
-      // Prefer DOM value over localStorage to handle hydration
-      const finalValue = domValue || localStorageInput || "";
+      const finalValue = domValue || localStorageInput || ""; // Prefer DOM value over localStorage to handle hydration
       setInput(finalValue);
-      adjustHeight();
+      adjustHeight(); // Adjust the height after setting input
     }
-    // Only run once after hydration
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Only run once after hydration
 
   useEffect(() => {
-    setLocalStorageInput(input);
+    setLocalStorageInput(input); // Update local storage when input changes
   }, [input, setLocalStorageInput]);
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(event.target.value);
-    adjustHeight();
+    setInput(event.target.value); // Update input state
+    adjustHeight(); // Adjust the height of the textarea
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Reference to the file input element
+  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]); // State for upload queue
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, "", `/chat/${chatId}`);
+    window.history.replaceState({}, "", `/chat/${chatId}`); // Update URL without reloading
 
     handleSubmit(undefined, {
-      experimental_attachments: attachments,
+      experimental_attachments: attachments, // Submit form with attachments
     });
 
-    setAttachments([]);
-    setLocalStorageInput("");
+    setAttachments([]); // Clear attachments
+    setLocalStorageInput(""); // Clear local storage input
 
     if (width && width > 768) {
-      textareaRef.current?.focus();
+      textareaRef.current?.focus(); // Focus on textarea if width is greater than 768px
     }
   }, [
     attachments,
@@ -147,12 +144,12 @@ export function MultimodalInput({
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", file); // Append file to form data
 
     try {
       const response = await fetch(`/api/files/upload`, {
         method: "POST",
-        body: formData,
+        body: formData, // Upload file
       });
 
       if (response.ok) {
@@ -162,22 +159,22 @@ export function MultimodalInput({
         return {
           url,
           name: pathname,
-          contentType: contentType,
+          contentType: contentType, // Return file details
         };
       } else {
         const { error } = await response.json();
-        toast.error(error);
+        toast.error(error); // Show error toast
       }
     } catch (error) {
-      toast.error("Failed to upload file, please try again!");
+      toast.error("Failed to upload file, please try again!"); // Show error toast
     }
   };
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
+      const files = Array.from(event.target.files || []); // Get selected files
 
-      setUploadQueue(files.map((file) => file.name));
+      setUploadQueue(files.map((file) => file.name)); // Update upload queue
 
       try {
         const uploadPromises = files.map((file) => uploadFile(file));
@@ -188,44 +185,44 @@ export function MultimodalInput({
 
         setAttachments((currentAttachments) => [
           ...currentAttachments,
-          ...successfullyUploadedAttachments,
+          ...successfullyUploadedAttachments, // Update attachments with successfully uploaded files
         ]);
       } catch (error) {
-        console.error("Error uploading files!", error);
+        console.error("Error uploading files!", error); // Log error
       } finally {
-        setUploadQueue([]);
+        setUploadQueue([]); // Clear upload queue
       }
     },
     [setAttachments]
   );
 
-  const [isRecording, setIsRecording] = useState(false);
-  const { transcript, resetTranscript, listening } = useSpeechRecognition();
-  const [prevInput, setPrevInput] = useState("");
+  const [isRecording, setIsRecording] = useState(false); // State for recording
+  const { transcript, resetTranscript, listening } = useSpeechRecognition(); // Speech recognition hooks
+  const [prevInput, setPrevInput] = useState(""); // State for previous input
 
   useEffect(() => {
     let newInput = `${prevInput + transcript}`;
 
     if (transcript) {
-      setInput(newInput);
+      setInput(newInput); // Update input with transcript
     }
   }, [transcript]);
 
   const startRecording = () => {
-    setPrevInput(input);
-    setIsRecording(true);
-    SpeechRecognition.startListening({ continuous: true, language: "en-US" });
+    setPrevInput(input); // Save current input
+    setIsRecording(true); // Set recording state
+    SpeechRecognition.startListening({ continuous: true, language: "en-US" }); // Start listening
   };
 
   const stopRecording = () => {
-    SpeechRecognition.stopListening();
-    setInput(`${prevInput + transcript}`);
-    resetTranscript();
-    setIsRecording(false);
+    SpeechRecognition.stopListening(); // Stop listening
+    setInput(`${prevInput + transcript}`); // Update input with transcript
+    resetTranscript(); // Reset transcript
+    setIsRecording(false); // Set recording state
   };
 
   const handletogglePanel = () => {
-    togglePanel(attachments);
+    togglePanel(attachments); // Toggle panel with attachments
   };
 
   return (

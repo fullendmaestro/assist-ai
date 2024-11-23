@@ -19,6 +19,7 @@ interface ApplicationError extends Error {
   status: number;
 }
 
+// Function to fetch data from a given URL and handle errors
 export const fetcher = async (url: string) => {
   const res = await fetch(url);
 
@@ -36,6 +37,7 @@ export const fetcher = async (url: string) => {
   return res.json();
 };
 
+// Retrieves an item from the local storage and parses it as JSON.
 export function getLocalStorage(key: string) {
   if (typeof window !== "undefined") {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -43,6 +45,7 @@ export function getLocalStorage(key: string) {
   return [];
 }
 
+// Function to generate a UUID
 export function generateUUID(): string {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
@@ -51,6 +54,12 @@ export function generateUUID(): string {
   });
 }
 
+/**
+ * Adds tool messages to chat messages by updating the state and result of tool invocations.
+ * @param toolMessage - The tool message containing results to be added.
+ * @param messages - The array of chat messages to be updated.
+ * @returns The updated array of chat messages.
+ */
 function addToolMessageToChat({
   toolMessage,
   messages,
@@ -84,6 +93,21 @@ function addToolMessageToChat({
   });
 }
 
+/**
+ * Converts an array of database messages to an array of UI messages.
+ *
+ * @param messages - An array of messages from the database.
+ * @returns An array of messages formatted for the UI.
+ *
+ * The function processes each message and transforms it based on its role and content:
+ * - If the message role is "tool", it adds a tool message to the chat.
+ * - If the message content is a string, it is directly assigned to the text content.
+ * - If the message content is an array, it processes each content item:
+ *   - Text content is concatenated to the text content string.
+ *   - Tool call content is added to the tool invocations array.
+ *
+ * Each processed message is then pushed to the chat messages array.
+ */
 export function convertToUIMessages(
   messages: Array<DBMessage>
 ): Array<Message> {
@@ -126,6 +150,12 @@ export function convertToUIMessages(
   }, []);
 }
 
+/**
+ * Sanitizes an array of messages by filtering out unnecessary content.
+ *
+ * @param messages - An array of messages which can be either CoreToolMessage or CoreAssistantMessage.
+ * @returns An array of sanitized messages.
+ */
 export function sanitizeResponseMessages(
   messages: Array<CoreToolMessage | CoreAssistantMessage>
 ): Array<CoreToolMessage | CoreAssistantMessage> {
@@ -165,6 +195,13 @@ export function sanitizeResponseMessages(
   );
 }
 
+/**
+ * Sanitizes an array of messages by filtering out tool invocations that are not in the "result" state
+ * and removing messages that have no content or tool invocations.
+ *
+ * @param messages - An array of Message objects to be sanitized.
+ * @returns An array of sanitized Message objects.
+ */
 export function sanitizeUIMessages(messages: Array<Message>): Array<Message> {
   const messagesBySanitizedToolInvocations = messages.map((message) => {
     if (message.role !== "assistant") return message;

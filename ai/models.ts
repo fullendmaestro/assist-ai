@@ -1,12 +1,18 @@
 // Define your models here.
 
+/**
+ * Interface representing a model with its properties.
+ */
 export interface Model {
-  id: string;
-  label: string;
-  apiIdentifier: string;
-  description: string;
+  id: string; // Unique identifier for the model
+  label: string; // Display name for the model
+  apiIdentifier: string; // Identifier used for API calls
+  description: string; // Brief description of the model
 }
 
+/**
+ * Array of model objects available in the application.
+ */
 export const models: Array<Model> = [
   {
     id: "gemini-1.5-flash-002",
@@ -22,4 +28,7 @@ export const models: Array<Model> = [
   },
 ] as const;
 
+/**
+ * The default model name used in the application.
+ */
 export const DEFAULT_MODEL_NAME: string = "gemini-1.5-pro-002";
